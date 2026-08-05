@@ -383,7 +383,7 @@ with tab_overview:
     c3, c4 = st.columns([1.1, 1.1], gap="large")
 
     with c3:
-    if full_age_view:
+
         by_age = (
             filtered.groupby("age_group")["target"]
             .mean()
@@ -398,29 +398,39 @@ with tab_overview:
             categories=age_order,
             ordered=True,
         )
-
         by_age = by_age.sort_values("age_group")
+
+    # Dynamic title
+        if selected_age == (age_min, age_max):
+            chart_title = "Disease rate by age group"
+        else:
+            chart_title = (
+                f"Disease rate across predefined age groups "
+                f"(Selected ages: {selected_age[0]}–{selected_age[1]})"
+        )
 
         fig = px.bar(
             by_age,
             x="age_group",
             y="Disease rate (%)",
-            title="Disease rate by age group",
+            title=chart_title,
             text_auto=".1f",
             color_discrete_sequence=["#2563eb"],
-        )
-
+    )
+    
         fig.update_layout(
             xaxis_title="Age Group",
             yaxis_title="Disease rate (%)",
-            margin=dict(l=40, r=40, t=60, b=40),
+            margin=dict(l=40, r=40, t=70, b=40),
         )
 
         nice_bar(fig)
         st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Select the full age range to view disease rates by predefined age groups.")
 
+        if selected_age != (age_min, age_max):
+            st.caption(
+                "Note: Bars represent the predefined age bands that overlap with the selected age range."
+            )
     with c4:
         insights = build_insights(filtered)
         st.markdown('<div class="section-label">Key insights</div>', unsafe_allow_html=True)
