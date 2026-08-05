@@ -383,55 +383,60 @@ with tab_overview:
     c3, c4 = st.columns([1.1, 1.1], gap="large")
 
     with c3:
-        start_age, end_age = selected_age
 
-    # Build dynamic age bands starting from the selected minimum age
-        if start_age == end_age:
-            edges = [start_age, start_age + 10]
-            labels = [f"{start_age}–{start_age + 9}"]
-        else:
-            edges = [start_age]
-            next_edge = start_age + 10
+    # Full age range selected -> compare age groups
+        if selected_age == (age_min, age_max):
 
-        while next_edge < end_age:
-            edges.append(next_edge)
-            next_edge += 10
-
-            edges.append(end_age + 1)
-            labels = [f"{edges[i]}–{edges[i+1] - 1}" for i in range(len(edges) - 1)]
-
-        temp = filtered.copy()
-        temp["age_band"] = pd.cut(
-        temp["age"],
-        bins=edges,
-        labels=labels,
-        right=False,
-        include_lowest=True
-        )
+            by_age = (
+                filtered.groupby("age_group")["target"]
+                .mean()
+                .mul(100)
+                .reset_index(name="Disease rate (%)")
+                .dropna()
+            )
     
-        by_age = (
-            temp.groupby("age_band")["target"]
-            .mean()
-            .mul(100)
-            .reset_index(name="Disease rate (%)")
-            .dropna()
-        )
+            age_order = ["29–39", "40–49", "50–59", "60–69", "70+"]
+            by_age["age_group"] = pd.Categorical(
+                by_age["age_group"],
+                categories=age_order,
+                ordered=True,
+            )
+            by_age = by_age.sort_values("age_group")
+    
+            fig = px.bar(
+                by_age,
+                x="age_group",
+                y="Disease rate (%)",
+                title="Disease rate by age group",
+                text_auto=".1f",
+                color_discrete_sequence=["#2563eb"],
+            )
 
-        fig = px.bar(
-            by_age,
-            x="age_band",
-            y="Disease rate (%)",
-            title=f"Disease rate by age band ({start_age}–{end_age})",
-            text_auto=".1f",
-            color_discrete_sequence=["#2563eb"],
-        )
-
+        # Custom age range selected -> show one bar
+        else:
+    
+            rate = filtered["target"].mean() * 100 if len(filtered) else 0
+    
+            summary = pd.DataFrame({
+                "Age Range": [f"{selected_age[0]}–{selected_age[1]}"],
+                "Disease rate (%)": [rate],
+            })
+    
+            fig = px.bar(
+                summary,
+                x="Age Range",
+                y="Disease rate (%)",
+                title=f"Disease rate for selected age range ({selected_age[0]}–{selected_age[1]})",
+                text_auto=".1f",
+                color_discrete_sequence=["#2563eb"],
+            )
+    
         fig.update_layout(
-            xaxis_title="Age Group",
+            xaxis_title="",
             yaxis_title="Disease rate (%)",
             margin=dict(l=40, r=40, t=60, b=40),
         )
-
+    
         nice_bar(fig)
         st.plotly_chart(fig, use_container_width=True)
     with c4:
