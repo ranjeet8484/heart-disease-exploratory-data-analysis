@@ -1,4 +1,3 @@
-
 import io
 from pathlib import Path
 
@@ -8,12 +7,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-
 st.set_page_config(
     page_title="Heart Disease EDA Report",
     page_icon="🫀",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ----------------------------
@@ -23,53 +21,94 @@ st.markdown(
     """
     <style>
         .block-container {
-            padding-top: 1rem;
+            padding-top: 2.2rem;
             padding-bottom: 1rem;
         }
+
         .hero {
-            padding: 1.1rem 1.25rem;
-            border-radius: 18px;
+            padding: 2rem 2rem;
+            border-radius: 24px;
             background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-            border: 1px solid #e5e7eb;
+            border: 1px solid #dbe4f0;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+            margin-bottom: 16px;
         }
+
         .hero-title {
-            font-size: 2.05rem;
+            font-size: 2.35rem;
             font-weight: 800;
-            margin-bottom: 0.15rem;
+            margin-bottom: 0.35rem;
             color: #0f172a;
+            letter-spacing: -0.02em;
         }
+
         .hero-subtitle {
-            font-size: 0.98rem;
+            font-size: 1.02rem;
             color: #475569;
-            line-height: 1.55;
+            line-height: 1.7;
+            max-width: 980px;
         }
+
         .section-label {
             font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: 0.02em;
+            font-weight: 800;
+            letter-spacing: 0.03em;
             color: #334155;
             text-transform: uppercase;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.65rem;
         }
+
         .insight-box {
             padding: 1rem 1rem;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
-            background: #ffffff;
+            background: #f8fafc;
+            color: #0f172a !important;
+            border-left: 5px solid #2563eb;
+            line-height: 1.6;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
         }
+
+        .insight-box strong,
+        .insight-box span,
+        .insight-box div {
+            color: #0f172a !important;
+        }
+
         .muted {
             color: #64748b;
             font-size: 0.92rem;
         }
+
         .small-note {
             color: #64748b;
             font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Make default Streamlit elements a touch cleaner */
+        div[data-testid="stMetric"] {
+            background: rgba(248, 250, 252, 0.70);
+            border: 1px solid #e2e8f0;
+            padding: 0.9rem 1rem;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        }
+
+        div[data-testid="stMetricLabel"] > div {
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        div[data-testid="stMetricValue"] {
+            color: #0f172a;
+            font-weight: 800;
         }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 
 # ----------------------------
 # Data utilities
@@ -124,8 +163,7 @@ FEATURE_GUIDE = pd.DataFrame(
 def load_data() -> pd.DataFrame:
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Could not find {DATA_PATH.name} beside app.py.")
-    df = pd.read_csv(DATA_PATH)
-    return df
+    return pd.read_csv(DATA_PATH)
 
 
 def add_labels(df: pd.DataFrame) -> pd.DataFrame:
@@ -146,10 +184,6 @@ def add_labels(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def fmt_pct(x: float) -> str:
-    return f"{x:.1f}%"
-
-
 def disease_rate(series: pd.Series) -> float:
     return float(series.mean() * 100) if len(series) else 0.0
 
@@ -157,14 +191,13 @@ def disease_rate(series: pd.Series) -> float:
 def nice_bar(fig):
     fig.update_layout(
         template="plotly_white",
-        margin=dict(l=10, r=10, t=40, b=10),
+        height=430,
+        margin=dict(l=40, r=35, t=60, b=40),
         legend_title_text="",
+        font=dict(size=14),
+        title_font_size=20,
     )
     return fig
-
-
-def safe_div(a, b):
-    return float(a) / float(b) if b else 0.0
 
 
 def build_insights(df: pd.DataFrame) -> list[str]:
@@ -187,24 +220,22 @@ def build_insights(df: pd.DataFrame) -> list[str]:
 
     by_age = df.groupby("age_group")["target"].mean().sort_values(ascending=False) * 100
     if len(by_age):
-        insights.append(f"Highest disease rate appears in the {by_age.index[0]} age group ({by_age.iloc[0]:.1f}%).")
+        insights.append(
+            f"Highest disease rate appears in the {by_age.index[0]} age group ({by_age.iloc[0]:.1f}%)."
+        )
 
     by_cp = df.groupby("cp_label")["target"].mean().sort_values(ascending=False) * 100
     if len(by_cp):
-        insights.append(f"Chest pain type most associated with disease here: {by_cp.index[0]} ({by_cp.iloc[0]:.1f}%).")
-
-    by_exang = df.groupby("exang_label")["target"].mean().sort_values(ascending=False) * 100
-    if len(by_exang) >= 2:
-        yes = by_exang.get("Yes")
-        no = by_exang.get("No")
-        if yes is not None and no is not None:
-            insights.append(f"Exercise-induced angina = Yes has a disease rate of {yes:.1f}% vs {no:.1f}% when No.")
+        insights.append(
+            f"Chest pain type most associated with disease here: {by_cp.index[0]} ({by_cp.iloc[0]:.1f}%)."
+        )
 
     return insights[:4]
 
 
-def download_csv(df: pd.DataFrame) -> bytes:
-    return df.to_csv(index=False).encode("utf-8")
+def data_for_download(df: pd.DataFrame) -> bytes:
+    export_df = df.drop(columns=[c for c in df.columns if c.endswith("_label") or c == "age_group"])
+    return export_df.to_csv(index=False).encode("utf-8")
 
 
 # ----------------------------
@@ -280,17 +311,21 @@ st.write("")
 # ----------------------------
 # Top KPIs
 # ----------------------------
-k1, k2, k3, k4, k5 = st.columns(5)
+k1, k2, k3, k4 = st.columns(4)
 with k1:
-    st.metric("Records", f"{len(filtered):,}", delta=f"{len(filtered)-len(df):,}" if len(filtered) != len(df) else None)
+    st.metric("Records", f"{len(filtered):,}")
 with k2:
-    st.metric("Disease Rate", f"{filtered['target'].mean()*100:.1f}%" if len(filtered) else "0.0%")
+    st.metric("Disease Rate", f"{filtered['target'].mean() * 100:.1f}%" if len(filtered) else "0.0%")
 with k3:
     st.metric("Avg Age", f"{filtered['age'].mean():.1f}" if len(filtered) else "—")
 with k4:
-    st.metric("Avg Cholesterol", f"{filtered['chol'].mean():.1f}" if len(filtered) else "—")
-with k5:
     st.metric("Avg Max HR", f"{filtered['thalach'].mean():.1f}" if len(filtered) else "—")
+
+k5, k6 = st.columns(2)
+with k5:
+    st.metric("Avg Cholesterol", f"{filtered['chol'].mean():.1f}" if len(filtered) else "—")
+with k6:
+    st.metric("Avg Resting BP", f"{filtered['trestbps'].mean():.1f}" if len(filtered) else "—")
 
 st.caption(
     "Dataset: 1,025 patient records • 14 columns • cleaned and explored through statistical summaries, correlations, and visual analysis."
@@ -363,23 +398,23 @@ with tab_overview:
             y="Disease rate (%)",
             title="Disease rate by age group",
             text_auto=".1f",
-            color="Disease rate (%)",
-            color_continuous_scale=["#dbeafe", "#2563eb"],
+            color_discrete_sequence=["#2563eb"],
         )
+        fig.update_layout(xaxis_title="age_group", yaxis_title="Disease rate (%)")
         nice_bar(fig)
         st.plotly_chart(fig, use_container_width=True)
 
     with c4:
-        # Simple narrative card with generated takeaways
         insights = build_insights(filtered)
         st.markdown('<div class="section-label">Key insights</div>', unsafe_allow_html=True)
         for idx, text in enumerate(insights, start=1):
             st.markdown(
                 f"""
                 <div class="insight-box">
-                    <strong>{idx}.</strong> {text}
+                    <div style="color:#0f172a !important;">
+                        <strong>{idx}.</strong> {text}
+                    </div>
                 </div>
-                <div style="height:0.5rem;"></div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -561,19 +596,26 @@ with tab_guide:
 # ----------------------------
 with tab_data:
     st.markdown("### Filtered data preview")
-    st.write(
-        f"Showing **{len(filtered):,}** rows after applying the sidebar filters."
+    st.write(f"Showing **{len(filtered):,}** rows after applying the sidebar filters.")
+    st.dataframe(
+        filtered.drop(columns=[c for c in filtered.columns if c.endswith("_label") or c == "age_group"]),
+        use_container_width=True,
+        height=420,
     )
-    st.dataframe(filtered.drop(columns=[c for c in filtered.columns if c.endswith("_label") or c == "age_group"]), use_container_width=True, height=420)
 
     st.download_button(
         "Download filtered CSV",
-        data=download_csv(filtered.drop(columns=[c for c in filtered.columns if c.endswith("_label") or c == "age_group"])),
+        data=data_for_download(filtered),
         file_name="heart_disease_filtered.csv",
         mime="text/csv",
     )
 
 st.markdown("---")
-st.caption(
-    "Developed by Ranjeet Paswan | Exploratory Data Analysis in Python | Streamlit • Pandas • Plotly"
+st.markdown(
+    """
+    <div style="text-align:center;color:#64748b;padding:14px;font-size:15px;">
+    <b>Developed by Ranjeet Paswan</b> • Heart Disease Exploratory Data Analysis • Python • Streamlit • Plotly
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
