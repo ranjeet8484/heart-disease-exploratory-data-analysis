@@ -289,6 +289,7 @@ filtered = df[
     & df["thalach"].between(*selected_thalach)
     & df["trestbps"].between(*selected_bp)
 ].copy()
+full_age_view = selected_age == (age_min, age_max)
 
 # ----------------------------
 # Header / hero
@@ -382,6 +383,7 @@ with tab_overview:
     c3, c4 = st.columns([1.1, 1.1], gap="large")
 
     with c3:
+    if full_age_view:
         by_age = (
             filtered.groupby("age_group")["target"]
             .mean()
@@ -389,9 +391,16 @@ with tab_overview:
             .reset_index(name="Disease rate (%)")
             .dropna()
         )
+
         age_order = ["29–39", "40–49", "50–59", "60–69", "70+"]
-        by_age["age_group"] = pd.Categorical(by_age["age_group"], categories=age_order, ordered=True)
+        by_age["age_group"] = pd.Categorical(
+            by_age["age_group"],
+            categories=age_order,
+            ordered=True,
+        )
+
         by_age = by_age.sort_values("age_group")
+
         fig = px.bar(
             by_age,
             x="age_group",
@@ -400,9 +409,17 @@ with tab_overview:
             text_auto=".1f",
             color_discrete_sequence=["#2563eb"],
         )
-        fig.update_layout(xaxis_title="age_group", yaxis_title="Disease rate (%)")
+
+        fig.update_layout(
+            xaxis_title="Age Group",
+            yaxis_title="Disease rate (%)",
+            margin=dict(l=40, r=40, t=60, b=40),
+        )
+
         nice_bar(fig)
         st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Select the full age range to view disease rates by predefined age groups.")
 
     with c4:
         insights = build_insights(filtered)
