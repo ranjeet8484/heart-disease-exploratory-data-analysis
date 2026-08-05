@@ -290,7 +290,23 @@ filtered = df[
     & df["trestbps"].between(*selected_bp)
 ].copy()
 
+# ----------------------------
+# Header / hero
+# ----------------------------
+st.markdown(
+    """
+    <div class="hero">
+        <div class="hero-title">🫀 Heart Disease Exploratory Data Analysis</div>
+        <div class="hero-subtitle">
+            An interactive Streamlit report that turns the exploratory analysis into a recruiter-friendly story:
+            patient demographics, clinical indicators, correlations, and feature-level insights — without building a predictive model.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
+st.write("")
 
 # ----------------------------
 # Top KPIs
@@ -403,15 +419,7 @@ with tab_overview:
                 unsafe_allow_html=True,
             )
 
-        st.markdown(
-            """
-            <div class="small-note">
-            This app is designed as an interactive EDA report: it helps recruiters quickly see how you explore
-            demographics, clinical signals, and correlations before any predictive modeling.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        
 
 # ----------------------------
 # Clinical patterns tab
