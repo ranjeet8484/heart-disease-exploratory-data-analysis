@@ -389,51 +389,51 @@ with tab_overview:
         if start_age == end_age:
             edges = [start_age, start_age + 10]
             labels = [f"{start_age}–{start_age + 9}"]
-    else:
-        edges = [start_age]
-        next_edge = start_age + 10
+        else:
+            edges = [start_age]
+            next_edge = start_age + 10
 
         while next_edge < end_age:
             edges.append(next_edge)
             next_edge += 10
 
-        edges.append(end_age + 1)
-        labels = [f"{edges[i]}–{edges[i+1] - 1}" for i in range(len(edges) - 1)]
+            edges.append(end_age + 1)
+            labels = [f"{edges[i]}–{edges[i+1] - 1}" for i in range(len(edges) - 1)]
 
-    temp = filtered.copy()
-    temp["age_band"] = pd.cut(
+        temp = filtered.copy()
+        temp["age_band"] = pd.cut(
         temp["age"],
         bins=edges,
         labels=labels,
         right=False,
         include_lowest=True
-    )
+        )
+    
+        by_age = (
+            temp.groupby("age_band")["target"]
+            .mean()
+            .mul(100)
+            .reset_index(name="Disease rate (%)")
+            .dropna()
+        )
 
-    by_age = (
-        temp.groupby("age_band")["target"]
-        .mean()
-        .mul(100)
-        .reset_index(name="Disease rate (%)")
-        .dropna()
-    )
+        fig = px.bar(
+            by_age,
+            x="age_band",
+            y="Disease rate (%)",
+            title=f"Disease rate by age band ({start_age}–{end_age})",
+            text_auto=".1f",
+            color_discrete_sequence=["#2563eb"],
+        )
 
-    fig = px.bar(
-        by_age,
-        x="age_band",
-        y="Disease rate (%)",
-        title=f"Disease rate by age band ({start_age}–{end_age})",
-        text_auto=".1f",
-        color_discrete_sequence=["#2563eb"],
-    )
+        fig.update_layout(
+            xaxis_title="Age Group",
+            yaxis_title="Disease rate (%)",
+            margin=dict(l=40, r=40, t=60, b=40),
+        )
 
-    fig.update_layout(
-        xaxis_title="Age Group",
-        yaxis_title="Disease rate (%)",
-        margin=dict(l=40, r=40, t=60, b=40),
-    )
-
-    nice_bar(fig)
-    st.plotly_chart(fig, use_container_width=True)
+        nice_bar(fig)
+        st.plotly_chart(fig, use_container_width=True)
     with c4:
         insights = build_insights(filtered)
         st.markdown('<div class="section-label">Key insights</div>', unsafe_allow_html=True)
